@@ -8,6 +8,7 @@ const ENLACES = [
   { href: "/albaranes", label: "Recepción de albaranes", icon: "📥" },
   { href: "/ventas", label: "Import de ventas", icon: "🧮" },
   { href: "/ajustes", label: "Ajustes de stock", icon: "⚖️" },
+  { href: "/configuracion", label: "Configuración", icon: "⚙️" },
 ];
 
 export default function MasPage() {

@@ -1,5 +1,5 @@
 export type TipoArticulo = "materia_prima" | "producto_terminado" | "consumible";
-export type UnidadBase = "g" | "ml" | "ud";
+export type UnidadBase = string;
 export type TipoMovimiento =
   | "compra"
   | "venta"
@@ -29,6 +29,16 @@ export interface Database {
           created_at?: string;
         };
         Update: Partial<Database["public"]["Tables"]["ubicaciones"]["Insert"]>;
+        Relationships: [];
+      };
+      unidades: {
+        Row: {
+          nombre: string;
+        };
+        Insert: {
+          nombre: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["unidades"]["Insert"]>;
         Relationships: [];
       };
       proveedores: {

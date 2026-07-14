@@ -10,11 +10,14 @@ export default async function EditarArticuloPage({
 }) {
   const { id } = await params;
   const supabase = await createClient();
-  const { data: articulo } = await supabase
-    .from("articulos")
-    .select("id, nombre, tipo, unidad, stock_minimo, codigo_tpv, activo")
-    .eq("id", id)
-    .single();
+  const [{ data: articulo }, { data: unidades }] = await Promise.all([
+    supabase
+      .from("articulos")
+      .select("id, nombre, tipo, unidad, stock_minimo, codigo_tpv, activo")
+      .eq("id", id)
+      .single(),
+    supabase.from("unidades").select("nombre").order("nombre"),
+  ]);
 
   if (!articulo) notFound();
 
@@ -29,7 +32,10 @@ export default async function EditarArticuloPage({
         </h1>
       </header>
 
-      <ArticuloForm articulo={articulo} />
+      <ArticuloForm
+        articulo={articulo}
+        unidades={(unidades ?? []).map((u) => u.nombre)}
+      />
     </div>
   );
 }

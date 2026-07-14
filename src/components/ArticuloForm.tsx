@@ -1,5 +1,5 @@
 import { guardarArticulo } from "@/app/(app)/catalogo/actions";
-import { ETIQUETA_TIPO_ARTICULO, TIPOS_ARTICULO, UNIDADES } from "@/lib/constants";
+import { ETIQUETA_TIPO_ARTICULO, TIPOS_ARTICULO } from "@/lib/constants";
 
 type ArticuloExistente = {
   id: string;
@@ -11,7 +11,13 @@ type ArticuloExistente = {
   activo: boolean;
 };
 
-export function ArticuloForm({ articulo }: { articulo?: ArticuloExistente }) {
+export function ArticuloForm({
+  articulo,
+  unidades,
+}: {
+  articulo?: ArticuloExistente;
+  unidades: string[];
+}) {
   return (
     <form action={guardarArticulo} className="flex flex-col gap-4">
       {articulo && <input type="hidden" name="id" value={articulo.id} />}
@@ -65,7 +71,7 @@ export function ArticuloForm({ articulo }: { articulo?: ArticuloExistente }) {
           <option value="" disabled>
             Selecciona una unidad
           </option>
-          {UNIDADES.map((u) => (
+          {unidades.map((u) => (
             <option key={u} value={u}>
               {u}
             </option>

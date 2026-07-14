@@ -12,7 +12,6 @@ export const ETIQUETA_MOTIVO_MERMA: Record<string, string> = {
   otro: "Otro",
 };
 
-export const UNIDADES = ["g", "ml", "ud"] as const;
 export const TIPOS_ARTICULO = [
   "materia_prima",
   "producto_terminado",
