@@ -132,9 +132,11 @@ export async function escanearAlbaran(formData: FormData) {
             text:
               "Este documento es un albarán de entrega o una factura de un proveedor de un obrador/panadería (Candela). " +
               "Extrae exactamente lo que aparece escrito, sin inventar ni completar datos que no estén presentes: " +
-              "nombre del proveedor emisor, número de documento, fecha (conviértela a formato YYYY-MM-DD), y cada línea de producto " +
+              "nombre del proveedor emisor, número de documento, fecha (conviértela a formato YYYY-MM-DD; si aparecen varias fechas " +
+              "distintas, como fecha de emisión/pedido y fecha de entrega, usa la fecha de entrega), y cada línea de producto " +
               "con su descripción literal, la cantidad numérica y el precio unitario si figura (si no figura, usa null). " +
-              "Ignora totales, impuestos y líneas que no sean artículos.",
+              "Ignora totales, impuestos, y cualquier línea que no sea un artículo de stock: no incluyas cargos de transporte, " +
+              "portes, 'servicio fuera de ruta' u otros conceptos de servicio que no sean productos físicos recibidos.",
           },
         ],
       },
@@ -160,15 +162,18 @@ export async function escanearAlbaran(formData: FormData) {
     );
   }
 
-  // 3. Intentar emparejar el proveedor por nombre
+  // 3. Intentar emparejar el proveedor por nombre (coincidencia parcial en ambos sentidos:
+  //    "Tal Com Pinta" en la BD debe encontrar "Tal Com Pinta Barcelona, S.L." en el documento y viceversa)
   let proveedor_id: string | null = null;
   if (extraido.proveedor_nombre) {
-    const { data: proveedor } = await supabase
-      .from("proveedores")
-      .select("id")
-      .ilike("nombre", extraido.proveedor_nombre)
-      .maybeSingle();
-    proveedor_id = proveedor?.id ?? null;
+    const { data: proveedores } = await supabase.from("proveedores").select("id, nombre");
+    const nombreDocumento = extraido.proveedor_nombre.trim().toLowerCase();
+    const encontrado = (proveedores ?? []).find(
+      (p) =>
+        nombreDocumento.includes(p.nombre.trim().toLowerCase()) ||
+        p.nombre.trim().toLowerCase().includes(nombreDocumento)
+    );
+    proveedor_id = encontrado?.id ?? null;
   }
 
   // 4. Si conocemos al proveedor, intentar emparejar líneas con sus alias ya guardados
