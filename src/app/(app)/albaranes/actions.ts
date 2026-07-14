@@ -92,8 +92,50 @@ export async function confirmarAlbaran(formData: FormData) {
     .eq("albaran_id", albaran_id);
   if (errorLineas) throw new Error(errorLineas.message);
   if (!lineas || lineas.length === 0) throw new Error("El albarán no tiene líneas");
-  if (lineas.some((l) => !l.articulo_id)) {
-    throw new Error("Todas las líneas deben tener un artículo asignado");
+
+  // Si alguna línea no tiene artículo asignado (típico del escaneo con IA cuando
+  // el texto no coincide con ningún alias conocido), lo creamos automáticamente
+  // en vez de bloquear la confirmación. Se cachea por nombre para no duplicar
+  // artículos dentro de la misma confirmación ni chocar con la unicidad de nombre.
+  const idPorNombre = new Map<string, string>();
+  for (const linea of lineas) {
+    if (linea.articulo_id || !linea.texto_original) continue;
+    const nombre = linea.texto_original.trim();
+    const clave = nombre.toLowerCase();
+
+    let articuloId = idPorNombre.get(clave);
+    if (!articuloId) {
+      const { data: existente } = await supabase
+        .from("articulos")
+        .select("id")
+        .ilike("nombre", nombre)
+        .maybeSingle();
+
+      if (existente) {
+        articuloId = existente.id;
+      } else {
+        const { data: nuevo, error: errorNuevo } = await supabase
+          .from("articulos")
+          .insert({ nombre, tipo: "materia_prima", unidad: "ud" })
+          .select("id")
+          .single();
+        if (errorNuevo || !nuevo) {
+          throw new Error(
+            errorNuevo?.message ?? `Error al crear el artículo "${nombre}"`
+          );
+        }
+        articuloId = nuevo.id;
+      }
+      idPorNombre.set(clave, articuloId);
+    }
+
+    const { error: errorAsignar } = await supabase
+      .from("albaran_lineas")
+      .update({ articulo_id: articuloId })
+      .eq("id", linea.id);
+    if (errorAsignar) throw new Error(errorAsignar.message);
+
+    linea.articulo_id = articuloId;
   }
 
   for (const linea of lineas) {

@@ -101,7 +101,10 @@ export default async function AlbaranDetallePage({
           return (
             <li key={l.id} className="flex flex-col gap-0.5 px-4 py-3">
               <span className="font-medium text-zinc-900">
-                {articulo?.nombre ?? "⚠️ Sin artículo asignado"}
+                {articulo?.nombre ??
+                  (albaran.estado === "pendiente_revision"
+                    ? "🆕 Se creará como artículo nuevo al confirmar"
+                    : "⚠️ Sin artículo asignado")}
               </span>
               <span className="text-xs text-zinc-500">
                 {l.texto_original && `"${l.texto_original}" · `}
