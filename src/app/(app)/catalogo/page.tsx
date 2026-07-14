@@ -14,7 +14,10 @@ export default async function CatalogoPage() {
     <div className="mx-auto flex w-full max-w-2xl flex-1 flex-col gap-4 px-4 py-6">
       <header className="flex items-center justify-between gap-3">
         <div>
-          <h1 className="text-lg font-semibold text-zinc-900">Catálogo</h1>
+          <Link href="/mas" className="text-sm text-zinc-500 hover:text-zinc-900">
+            ← Más
+          </Link>
+          <h1 className="mt-1 text-lg font-semibold text-zinc-900">Catálogo</h1>
           <div className="mt-1 flex gap-3 text-sm">
             <Link href="/catalogo/proveedores" className="text-zinc-500 hover:text-zinc-900">
               Proveedores

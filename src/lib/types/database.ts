@@ -242,6 +242,30 @@ export interface Database {
         Update: Partial<Database["public"]["Tables"]["partes_produccion"]["Insert"]>;
         Relationships: [];
       };
+      partes_horneado: {
+        Row: {
+          id: string;
+          fecha: string;
+          articulo_id: string;
+          ubicacion_id: string;
+          cantidad: number;
+          resuelto: boolean;
+          usuario_id: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          fecha?: string;
+          articulo_id: string;
+          ubicacion_id: string;
+          cantidad: number;
+          resuelto?: boolean;
+          usuario_id?: string | null;
+          created_at?: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["partes_horneado"]["Insert"]>;
+        Relationships: [];
+      };
       mermas: {
         Row: {
           id: string;
@@ -251,6 +275,7 @@ export interface Database {
           motivo: MotivoMerma;
           notas: string | null;
           foto_path: string | null;
+          parte_horneado_id: string | null;
           usuario_id: string | null;
           created_at: string;
         };
@@ -262,6 +287,7 @@ export interface Database {
           motivo: MotivoMerma;
           notas?: string | null;
           foto_path?: string | null;
+          parte_horneado_id?: string | null;
           usuario_id?: string | null;
           created_at?: string;
         };

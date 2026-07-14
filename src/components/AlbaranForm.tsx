@@ -1,7 +1,22 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { useFormStatus } from "react-dom";
+import { unstable_rethrow } from "next/navigation";
 import { crearAlbaran } from "@/app/(app)/albaranes/actions";
+
+function BotonEnviar() {
+  const { pending } = useFormStatus();
+  return (
+    <button
+      type="submit"
+      disabled={pending}
+      className="mt-2 w-full rounded-lg bg-zinc-900 px-4 py-3 text-base font-medium text-white transition-colors hover:bg-zinc-800 disabled:cursor-not-allowed disabled:opacity-50"
+    >
+      {pending ? "Guardando…" : "Guardar (pendiente de revisión)"}
+    </button>
+  );
+}
 
 type Proveedor = { id: string; nombre: string };
 type Articulo = { id: string; nombre: string; unidad: string };
@@ -42,6 +57,7 @@ export function AlbaranForm({
 }) {
   const [proveedorId, setProveedorId] = useState("");
   const [lineas, setLineas] = useState<Linea[]>([{ ...LINEA_VACIA }]);
+  const [error, setError] = useState<string | null>(null);
 
   const aliasDisponibles = useMemo(
     () => aliasPorProveedor[proveedorId] ?? [],
@@ -75,7 +91,17 @@ export function AlbaranForm({
   );
 
   return (
-    <form action={crearAlbaran} className="flex flex-col gap-4">
+    <form
+      action={async (formData) => {
+        try {
+          await crearAlbaran(formData);
+        } catch (err) {
+          unstable_rethrow(err);
+          setError(err instanceof Error ? err.message : "Error al guardar el albarán");
+        }
+      }}
+      className="flex flex-col gap-4"
+    >
       <input type="hidden" name="lineas" value={lineasJson} />
 
       <div className="flex flex-col gap-1.5">
@@ -260,12 +286,11 @@ export function AlbaranForm({
         </button>
       </div>
 
-      <button
-        type="submit"
-        className="mt-2 w-full rounded-lg bg-zinc-900 px-4 py-3 text-base font-medium text-white transition-colors hover:bg-zinc-800"
-      >
-        Guardar (pendiente de revisión)
-      </button>
+      {error && (
+        <p className="rounded-lg bg-red-50 px-4 py-3 text-sm text-red-800">{error}</p>
+      )}
+
+      <BotonEnviar />
     </form>
   );
 }

@@ -1,11 +1,26 @@
 "use client";
 
 import { useState } from "react";
+import { useFormStatus } from "react-dom";
+import { unstable_rethrow } from "next/navigation";
 import { registrarTransferencia } from "@/app/(app)/transferencias/actions";
 
 type Articulo = { id: string; nombre: string; unidad: string };
 type Ubicacion = { id: string; nombre: string };
 type Linea = { articulo_id: string; cantidad: string };
+
+function BotonEnviar() {
+  const { pending } = useFormStatus();
+  return (
+    <button
+      type="submit"
+      disabled={pending}
+      className="mt-2 w-full rounded-lg bg-zinc-900 px-4 py-3 text-base font-medium text-white transition-colors hover:bg-zinc-800 disabled:cursor-not-allowed disabled:opacity-50"
+    >
+      {pending ? "Guardando…" : "Confirmar traslado"}
+    </button>
+  );
+}
 
 export function TransferenciaForm({
   ubicaciones,
@@ -21,6 +36,7 @@ export function TransferenciaForm({
   const [lineas, setLineas] = useState<Linea[]>([
     { articulo_id: "", cantidad: "" },
   ]);
+  const [error, setError] = useState<string | null>(null);
 
   function actualizarLinea(index: number, cambios: Partial<Linea>) {
     setLineas((prev) =>
@@ -46,7 +62,17 @@ export function TransferenciaForm({
   );
 
   return (
-    <form action={registrarTransferencia} className="flex flex-col gap-4">
+    <form
+      action={async (formData) => {
+        try {
+          await registrarTransferencia(formData);
+        } catch (err) {
+          unstable_rethrow(err);
+          setError(err instanceof Error ? err.message : "Error al registrar el traslado");
+        }
+      }}
+      className="flex flex-col gap-4"
+    >
       <input type="hidden" name="lineas" value={lineasJson} />
 
       <div className="grid grid-cols-2 gap-3">
@@ -136,12 +162,11 @@ export function TransferenciaForm({
         </button>
       </div>
 
-      <button
-        type="submit"
-        className="mt-2 w-full rounded-lg bg-zinc-900 px-4 py-3 text-base font-medium text-white transition-colors hover:bg-zinc-800"
-      >
-        Confirmar traslado
-      </button>
+      {error && (
+        <p className="rounded-lg bg-red-50 px-4 py-3 text-sm text-red-800">{error}</p>
+      )}
+
+      <BotonEnviar />
     </form>
   );
 }

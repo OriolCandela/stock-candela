@@ -1,5 +1,23 @@
+"use client";
+
+import { useState } from "react";
+import { useFormStatus } from "react-dom";
+import { unstable_rethrow } from "next/navigation";
 import { guardarArticulo } from "@/app/(app)/catalogo/actions";
 import { ETIQUETA_TIPO_ARTICULO, TIPOS_ARTICULO } from "@/lib/constants";
+
+function BotonEnviar() {
+  const { pending } = useFormStatus();
+  return (
+    <button
+      type="submit"
+      disabled={pending}
+      className="mt-2 w-full rounded-lg bg-zinc-900 px-4 py-3 text-base font-medium text-white transition-colors hover:bg-zinc-800 disabled:cursor-not-allowed disabled:opacity-50"
+    >
+      {pending ? "Guardando…" : "Guardar"}
+    </button>
+  );
+}
 
 type ArticuloExistente = {
   id: string;
@@ -18,8 +36,20 @@ export function ArticuloForm({
   articulo?: ArticuloExistente;
   unidades: string[];
 }) {
+  const [error, setError] = useState<string | null>(null);
+
   return (
-    <form action={guardarArticulo} className="flex flex-col gap-4">
+    <form
+      action={async (formData) => {
+        try {
+          await guardarArticulo(formData);
+        } catch (err) {
+          unstable_rethrow(err);
+          setError(err instanceof Error ? err.message : "Error al guardar el artículo");
+        }
+      }}
+      className="flex flex-col gap-4"
+    >
       {articulo && <input type="hidden" name="id" value={articulo.id} />}
 
       <div className="flex flex-col gap-1.5">
@@ -119,12 +149,11 @@ export function ArticuloForm({
         Activo
       </label>
 
-      <button
-        type="submit"
-        className="mt-2 w-full rounded-lg bg-zinc-900 px-4 py-3 text-base font-medium text-white transition-colors hover:bg-zinc-800"
-      >
-        Guardar
-      </button>
+      {error && (
+        <p className="rounded-lg bg-red-50 px-4 py-3 text-sm text-red-800">{error}</p>
+      )}
+
+      <BotonEnviar />
     </form>
   );
 }

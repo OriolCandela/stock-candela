@@ -1,7 +1,22 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { useFormStatus } from "react-dom";
+import { unstable_rethrow } from "next/navigation";
 import { registrarAjuste } from "@/app/(app)/ajustes/actions";
+
+function BotonEnviar() {
+  const { pending } = useFormStatus();
+  return (
+    <button
+      type="submit"
+      disabled={pending}
+      className="mt-2 w-full rounded-lg bg-zinc-900 px-4 py-3 text-base font-medium text-white transition-colors hover:bg-zinc-800 disabled:cursor-not-allowed disabled:opacity-50"
+    >
+      {pending ? "Guardando…" : "Registrar ajuste"}
+    </button>
+  );
+}
 
 type Articulo = {
   id: string;
@@ -23,6 +38,7 @@ export function AjusteForm({
 }) {
   const [articuloId, setArticuloId] = useState(articuloSeleccionadoId ?? "");
   const [cantidadContada, setCantidadContada] = useState("");
+  const [error, setError] = useState<string | null>(null);
 
   const articulo = useMemo(
     () => articulos.find((a) => a.id === articuloId),
@@ -35,7 +51,17 @@ export function AjusteForm({
       : null;
 
   return (
-    <form action={registrarAjuste} className="flex flex-col gap-4">
+    <form
+      action={async (formData) => {
+        try {
+          await registrarAjuste(formData);
+        } catch (err) {
+          unstable_rethrow(err);
+          setError(err instanceof Error ? err.message : "Error al registrar el ajuste");
+        }
+      }}
+      className="flex flex-col gap-4"
+    >
       <input
         type="hidden"
         name="cantidad_teorica"
@@ -136,12 +162,11 @@ export function AjusteForm({
         <input type="hidden" name="ubicacion_id" value={ubicacionSeleccionadaId} />
       )}
 
-      <button
-        type="submit"
-        className="mt-2 w-full rounded-lg bg-zinc-900 px-4 py-3 text-base font-medium text-white transition-colors hover:bg-zinc-800"
-      >
-        Registrar ajuste
-      </button>
+      {error && (
+        <p className="rounded-lg bg-red-50 px-4 py-3 text-sm text-red-800">{error}</p>
+      )}
+
+      <BotonEnviar />
     </form>
   );
 }

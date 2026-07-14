@@ -10,9 +10,9 @@ const ETIQUETA_ESTADO: Record<string, string> = {
 export default async function AlbaranesPage({
   searchParams,
 }: {
-  searchParams: Promise<{ confirmado?: string }>;
+  searchParams: Promise<{ confirmado?: string; anulado?: string }>;
 }) {
-  const { confirmado } = await searchParams;
+  const { confirmado, anulado } = await searchParams;
   const supabase = await createClient();
 
   const [{ data: albaranes }, { data: proveedores }] = await Promise.all([
@@ -55,6 +55,11 @@ export default async function AlbaranesPage({
       {confirmado && (
         <p className="rounded-lg bg-green-50 px-4 py-3 text-sm text-green-800">
           Albarán confirmado y stock actualizado.
+        </p>
+      )}
+      {anulado && (
+        <p className="rounded-lg bg-zinc-50 px-4 py-3 text-sm text-zinc-600">
+          Albarán anulado.
         </p>
       )}
 

@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { confirmarAlbaran } from "@/app/(app)/albaranes/actions";
+import { RevisionAlbaranForm } from "@/components/RevisionAlbaranForm";
 
 const ETIQUETA_ESTADO: Record<string, string> = {
   pendiente_revision: "Pendiente de revisión",
@@ -32,7 +32,7 @@ export default async function AlbaranDetallePage({
       ).data?.signedUrl
     : null;
 
-  const [{ data: lineas }, { data: proveedor }, { data: ubicacion }] =
+  const [{ data: lineas }, { data: proveedor }, { data: ubicacion }, { data: todosArticulos }] =
     await Promise.all([
       supabase
         .from("albaran_lineas")
@@ -48,15 +48,10 @@ export default async function AlbaranDetallePage({
             .single()
         : Promise.resolve({ data: null }),
       supabase.from("ubicaciones").select("nombre").eq("id", albaran.ubicacion_id).single(),
+      supabase.from("articulos").select("id, nombre, unidad").eq("activo", true).order("nombre"),
     ]);
 
-  const articuloIds = (lineas ?? [])
-    .map((l) => l.articulo_id)
-    .filter((v): v is string => !!v);
-  const { data: articulos } = articuloIds.length
-    ? await supabase.from("articulos").select("id, nombre, unidad").in("id", articuloIds)
-    : { data: [] };
-  const articulosPorId = new Map((articulos ?? []).map((a) => [a.id, a]));
+  const articulosPorId = new Map((todosArticulos ?? []).map((a) => [a.id, a]));
 
   return (
     <div className="mx-auto flex w-full max-w-2xl flex-1 flex-col gap-4 px-4 py-6">
@@ -73,6 +68,8 @@ export default async function AlbaranDetallePage({
             className={`shrink-0 rounded-full px-2.5 py-1 text-xs font-medium ${
               albaran.estado === "confirmado"
                 ? "bg-green-100 text-green-800"
+                : albaran.estado === "anulado"
+                ? "bg-zinc-100 text-zinc-500"
                 : "bg-amber-100 text-amber-800"
             }`}
           >
@@ -95,38 +92,31 @@ export default async function AlbaranDetallePage({
         </a>
       )}
 
-      <ul className="flex flex-col divide-y divide-zinc-200 overflow-hidden rounded-lg border border-zinc-200 bg-white">
-        {(lineas ?? []).map((l) => {
-          const articulo = l.articulo_id ? articulosPorId.get(l.articulo_id) : null;
-          return (
-            <li key={l.id} className="flex flex-col gap-0.5 px-4 py-3">
-              <span className="font-medium text-zinc-900">
-                {articulo?.nombre ??
-                  (albaran.estado === "pendiente_revision"
-                    ? "🆕 Se creará como artículo nuevo al confirmar"
-                    : "⚠️ Sin artículo asignado")}
-              </span>
-              <span className="text-xs text-zinc-500">
-                {l.texto_original && `"${l.texto_original}" · `}
-                {l.cantidad_albaran} × factor {l.factor_conversion ?? 1} ={" "}
-                {l.cantidad_base} {articulo?.unidad}
-                {l.precio_unitario ? ` · ${l.precio_unitario} €/ud` : ""}
-              </span>
-            </li>
-          );
-        })}
-      </ul>
-
-      {albaran.estado === "pendiente_revision" && (
-        <form action={confirmarAlbaran}>
-          <input type="hidden" name="albaran_id" value={albaran.id} />
-          <button
-            type="submit"
-            className="w-full rounded-lg bg-zinc-900 px-4 py-3 text-base font-medium text-white transition-colors hover:bg-zinc-800"
-          >
-            Confirmar y actualizar stock
-          </button>
-        </form>
+      {albaran.estado === "pendiente_revision" ? (
+        <RevisionAlbaranForm
+          albaranId={albaran.id}
+          articulos={todosArticulos ?? []}
+          lineasIniciales={lineas ?? []}
+        />
+      ) : (
+        <ul className="flex flex-col divide-y divide-zinc-200 overflow-hidden rounded-lg border border-zinc-200 bg-white">
+          {(lineas ?? []).map((l) => {
+            const articulo = l.articulo_id ? articulosPorId.get(l.articulo_id) : null;
+            return (
+              <li key={l.id} className="flex flex-col gap-0.5 px-4 py-3">
+                <span className="font-medium text-zinc-900">
+                  {articulo?.nombre ?? "⚠️ Sin artículo asignado"}
+                </span>
+                <span className="text-xs text-zinc-500">
+                  {l.texto_original && `"${l.texto_original}" · `}
+                  {l.cantidad_albaran} × factor {l.factor_conversion ?? 1} ={" "}
+                  {l.cantidad_base} {articulo?.unidad}
+                  {l.precio_unitario ? ` · ${l.precio_unitario} €/ud` : ""}
+                </span>
+              </li>
+            );
+          })}
+        </ul>
       )}
     </div>
   );

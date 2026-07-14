@@ -1,11 +1,26 @@
 "use client";
 
 import { useState } from "react";
+import { useFormStatus } from "react-dom";
+import { unstable_rethrow } from "next/navigation";
 import { guardarEscandallo } from "@/app/(app)/catalogo/actions";
 
 type Articulo = { id: string; nombre: string; unidad: string };
 
 type Linea = { ingrediente_id: string; cantidad_por_lote: string };
+
+function BotonEnviar() {
+  const { pending } = useFormStatus();
+  return (
+    <button
+      type="submit"
+      disabled={pending}
+      className="mt-2 w-full rounded-lg bg-zinc-900 px-4 py-3 text-base font-medium text-white transition-colors hover:bg-zinc-800 disabled:cursor-not-allowed disabled:opacity-50"
+    >
+      {pending ? "Guardando…" : "Guardar escandallo"}
+    </button>
+  );
+}
 
 export function EscandalloForm({
   productos,
@@ -17,6 +32,7 @@ export function EscandalloForm({
   const [lineas, setLineas] = useState<Linea[]>([
     { ingrediente_id: "", cantidad_por_lote: "" },
   ]);
+  const [error, setError] = useState<string | null>(null);
 
   function actualizarLinea(index: number, cambios: Partial<Linea>) {
     setLineas((prev) =>
@@ -42,7 +58,17 @@ export function EscandalloForm({
   );
 
   return (
-    <form action={guardarEscandallo} className="flex flex-col gap-4">
+    <form
+      action={async (formData) => {
+        try {
+          await guardarEscandallo(formData);
+        } catch (err) {
+          unstable_rethrow(err);
+          setError(err instanceof Error ? err.message : "Error al guardar el escandallo");
+        }
+      }}
+      className="flex flex-col gap-4"
+    >
       <input type="hidden" name="lineas" value={lineasJson} />
 
       <div className="flex flex-col gap-1.5">
@@ -149,12 +175,11 @@ export function EscandalloForm({
         </button>
       </div>
 
-      <button
-        type="submit"
-        className="mt-2 w-full rounded-lg bg-zinc-900 px-4 py-3 text-base font-medium text-white transition-colors hover:bg-zinc-800"
-      >
-        Guardar escandallo
-      </button>
+      {error && (
+        <p className="rounded-lg bg-red-50 px-4 py-3 text-sm text-red-800">{error}</p>
+      )}
+
+      <BotonEnviar />
     </form>
   );
 }

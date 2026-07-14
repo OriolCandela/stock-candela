@@ -7,9 +7,9 @@ import { ETIQUETA_MOTIVO_MERMA, MOTIVOS_MERMA } from "@/lib/constants";
 export default async function MermasPage({
   searchParams,
 }: {
-  searchParams: Promise<{ ok?: string }>;
+  searchParams: Promise<{ ok?: string; horneado?: string; cierre?: string }>;
 }) {
-  const { ok } = await searchParams;
+  const { ok, horneado, cierre } = await searchParams;
   const supabase = await createClient();
   const { ubicaciones, seleccionada } = await getUbicacionActiva();
 
@@ -41,6 +41,39 @@ export default async function MermasPage({
           Merma registrada.
         </p>
       )}
+      {horneado && (
+        <p className="rounded-lg bg-green-50 px-4 py-3 text-sm text-green-800">
+          Horneado de hoy registrado.
+        </p>
+      )}
+      {cierre && (
+        <p className="rounded-lg bg-green-50 px-4 py-3 text-sm text-green-800">
+          Cierre registrado.
+        </p>
+      )}
+
+      <div className="grid grid-cols-2 gap-3">
+        <Link
+          href="/mermas/hornear"
+          className="rounded-lg border border-zinc-300 bg-white px-4 py-3 text-center text-sm font-medium text-zinc-900 hover:bg-zinc-50"
+        >
+          🌅 Horneado de hoy
+        </Link>
+        <Link
+          href="/mermas/cierre"
+          className="rounded-lg border border-zinc-300 bg-white px-4 py-3 text-center text-sm font-medium text-zinc-900 hover:bg-zinc-50"
+        >
+          🌙 Cierre de ayer
+        </Link>
+      </div>
+
+      <div>
+        <h2 className="text-sm font-medium text-zinc-700">Merma suelta</h2>
+        <p className="text-xs text-zinc-500">
+          Para roturas, caducidades u otros consumos no asociados a receta
+          (harina de espolvoreo, recortes de masa...).
+        </p>
+      </div>
 
       {!articulos || articulos.length === 0 ? (
         <p className="rounded-lg bg-amber-50 px-4 py-3 text-sm text-amber-800">
@@ -118,6 +151,7 @@ export default async function MermasPage({
             <input
               id="notas"
               name="notas"
+              placeholder="Ej. harina de espolvoreo, recorte de masa..."
               className="w-full rounded-lg border border-zinc-300 px-4 py-3 text-base focus:border-zinc-500 focus:outline-none focus:ring-1 focus:ring-zinc-500"
             />
           </div>
