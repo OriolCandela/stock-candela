@@ -251,14 +251,130 @@ begin
 end;
 $$;
 
+-- Horneado con traspaso automático de congelado: el producto formado (y
+-- congelado) vive en la ubicación de origen (Obrador); al hornearlo en otra
+-- ubicación (Candela Gràcia), se traspasa esa cantidad de origen a destino
+-- en el mismo movimiento, sin paso manual de "Transferencias".
+
+create or replace function registrar_horneado(
+  p_ubicacion_destino_id uuid,
+  p_ubicacion_origen_id uuid,
+  p_lineas jsonb
+)
+returns void
+language plpgsql
+as $$
+declare
+  v_linea jsonb;
+  v_articulo_id uuid;
+  v_cantidad numeric;
+  v_parte_id uuid;
+begin
+  if not exists (
+    select 1 from jsonb_array_elements(p_lineas) e
+    where (e->>'articulo_id') is not null and (e->>'cantidad')::numeric > 0
+  ) then
+    raise exception 'Marca al menos un sabor con unidades horneadas';
+  end if;
+
+  for v_linea in select * from jsonb_array_elements(p_lineas)
+  loop
+    v_articulo_id := (v_linea->>'articulo_id')::uuid;
+    v_cantidad := (v_linea->>'cantidad')::numeric;
+    if v_articulo_id is null or v_cantidad is null or v_cantidad <= 0 then
+      continue;
+    end if;
+
+    insert into partes_horneado (articulo_id, ubicacion_id, cantidad, usuario_id)
+    values (v_articulo_id, p_ubicacion_destino_id, v_cantidad, auth.uid())
+    returning id into v_parte_id;
+
+    if p_ubicacion_origen_id is not null and p_ubicacion_origen_id <> p_ubicacion_destino_id then
+      insert into movimientos (tipo, articulo_id, ubicacion_id, cantidad, ref_tabla, ref_id, usuario_id)
+      values
+        ('transferencia_salida', v_articulo_id, p_ubicacion_origen_id, -v_cantidad, 'partes_horneado', v_parte_id, auth.uid()),
+        ('transferencia_entrada', v_articulo_id, p_ubicacion_destino_id, v_cantidad, 'partes_horneado', v_parte_id, auth.uid());
+    end if;
+  end loop;
+end;
+$$;
+
+create or replace function actualizar_horneado(
+  p_id uuid,
+  p_nueva_cantidad numeric,
+  p_ubicacion_origen_id uuid
+)
+returns void
+language plpgsql
+as $$
+declare
+  v_articulo_id uuid;
+  v_ubicacion_destino_id uuid;
+  v_cantidad_actual numeric;
+  v_delta numeric;
+begin
+  select articulo_id, ubicacion_id, cantidad into v_articulo_id, v_ubicacion_destino_id, v_cantidad_actual
+  from partes_horneado where id = p_id and resuelto = false;
+  if not found then
+    raise exception 'Registro no encontrado o ya cerrado';
+  end if;
+
+  v_delta := p_nueva_cantidad - v_cantidad_actual;
+
+  if v_delta <> 0 and p_ubicacion_origen_id is not null and p_ubicacion_origen_id <> v_ubicacion_destino_id then
+    insert into movimientos (tipo, articulo_id, ubicacion_id, cantidad, ref_tabla, ref_id, usuario_id)
+    values
+      ('transferencia_salida', v_articulo_id, p_ubicacion_origen_id, -v_delta, 'partes_horneado', p_id, auth.uid()),
+      ('transferencia_entrada', v_articulo_id, v_ubicacion_destino_id, v_delta, 'partes_horneado', p_id, auth.uid());
+  end if;
+
+  update partes_horneado set cantidad = p_nueva_cantidad where id = p_id and resuelto = false;
+end;
+$$;
+
+create or replace function eliminar_horneado(
+  p_id uuid,
+  p_ubicacion_origen_id uuid
+)
+returns void
+language plpgsql
+as $$
+declare
+  v_articulo_id uuid;
+  v_ubicacion_destino_id uuid;
+  v_cantidad numeric;
+begin
+  select articulo_id, ubicacion_id, cantidad into v_articulo_id, v_ubicacion_destino_id, v_cantidad
+  from partes_horneado where id = p_id and resuelto = false;
+  if not found then
+    raise exception 'Registro no encontrado o ya cerrado';
+  end if;
+
+  if p_ubicacion_origen_id is not null and p_ubicacion_origen_id <> v_ubicacion_destino_id then
+    insert into movimientos (tipo, articulo_id, ubicacion_id, cantidad, ref_tabla, ref_id, usuario_id)
+    values
+      ('transferencia_entrada', v_articulo_id, p_ubicacion_origen_id, v_cantidad, 'partes_horneado', p_id, auth.uid()),
+      ('transferencia_salida', v_articulo_id, v_ubicacion_destino_id, -v_cantidad, 'partes_horneado', p_id, auth.uid());
+  end if;
+
+  delete from partes_horneado where id = p_id and resuelto = false;
+end;
+$$;
+
 revoke execute on function confirmar_albaran(uuid) from public;
 revoke execute on function cerrar_inventario(uuid, jsonb) from public;
 revoke execute on function confirmar_ventas() from public;
 revoke execute on function registrar_formado(uuid, jsonb) from public;
 revoke execute on function registrar_cierre_mermas(uuid, jsonb) from public;
+revoke execute on function registrar_horneado(uuid, uuid, jsonb) from public;
+revoke execute on function actualizar_horneado(uuid, numeric, uuid) from public;
+revoke execute on function eliminar_horneado(uuid, uuid) from public;
 
 grant execute on function confirmar_albaran(uuid) to authenticated;
 grant execute on function cerrar_inventario(uuid, jsonb) to authenticated;
 grant execute on function confirmar_ventas() to authenticated;
 grant execute on function registrar_formado(uuid, jsonb) to authenticated;
 grant execute on function registrar_cierre_mermas(uuid, jsonb) to authenticated;
+grant execute on function registrar_horneado(uuid, uuid, jsonb) to authenticated;
+grant execute on function actualizar_horneado(uuid, numeric, uuid) to authenticated;
+grant execute on function eliminar_horneado(uuid, uuid) to authenticated;

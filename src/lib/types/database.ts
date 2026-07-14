@@ -451,6 +451,26 @@ export interface Database {
         };
         Returns: void;
       };
+      registrar_horneado: {
+        Args: {
+          p_ubicacion_destino_id: string;
+          p_ubicacion_origen_id: string | null;
+          p_lineas: { articulo_id: string; cantidad: number }[];
+        };
+        Returns: void;
+      };
+      actualizar_horneado: {
+        Args: {
+          p_id: string;
+          p_nueva_cantidad: number;
+          p_ubicacion_origen_id: string | null;
+        };
+        Returns: void;
+      };
+      eliminar_horneado: {
+        Args: { p_id: string; p_ubicacion_origen_id: string | null };
+        Returns: void;
+      };
     };
   };
 }

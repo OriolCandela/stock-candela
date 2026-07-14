@@ -54,6 +54,24 @@ export async function registrarMerma(formData: FormData) {
 
 type LineaHorneado = { articulo_id: string; cantidad: number };
 
+// El producto formado se congela en el Obrador; al hornearlo en otra
+// ubicación, esa cantidad se traspasa automáticamente de Obrador a donde se
+// hornea. Si el propio Obrador es el destino (u Obrador no existe), no hay
+// traspaso que hacer.
+async function ubicacionOrigenCongelado(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  ubicacionDestinoId: string
+) {
+  const { data: obrador } = await supabase
+    .from("ubicaciones")
+    .select("id")
+    .eq("nombre", "Obrador")
+    .maybeSingle();
+
+  if (!obrador || obrador.id === ubicacionDestinoId) return null;
+  return obrador.id;
+}
+
 export async function registrarHorneado(formData: FormData) {
   const supabase = await createClient();
 
@@ -67,20 +85,18 @@ export async function registrarHorneado(formData: FormData) {
     throw new Error("Marca al menos un sabor con unidades horneadas");
   }
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const ubicacion_origen_id = await ubicacionOrigenCongelado(supabase, ubicacion_id);
 
-  const { error } = await supabase.from("partes_horneado").insert(
-    lineasValidas.map((l) => ({
-      articulo_id: l.articulo_id,
-      ubicacion_id,
-      cantidad: l.cantidad,
-      usuario_id: user?.id ?? null,
-    }))
-  );
+  // Registrar el horneado y, si aplica, traspasar de Obrador a la ubicación
+  // de horneado: todo en una única transacción por sabor.
+  const { error } = await supabase.rpc("registrar_horneado", {
+    p_ubicacion_destino_id: ubicacion_id,
+    p_ubicacion_origen_id: ubicacion_origen_id,
+    p_lineas: lineasValidas,
+  });
   if (error) throw new Error(error.message);
 
+  revalidatePath("/");
   revalidatePath("/mermas");
   revalidatePath("/mermas/hornear");
   redirect("/mermas?horneado=1");
@@ -90,20 +106,25 @@ export async function actualizarHorneado(formData: FormData) {
   const supabase = await createClient();
 
   const id = String(formData.get("id") ?? "");
+  const ubicacion_destino_id = String(formData.get("ubicacion_destino_id") ?? "");
   const cantidad = Number(formData.get("cantidad"));
-  if (!id || !Number.isFinite(cantidad) || cantidad <= 0) {
+  if (!id || !ubicacion_destino_id || !Number.isFinite(cantidad) || cantidad <= 0) {
     throw new Error("Cantidad no válida");
   }
 
+  const ubicacion_origen_id = await ubicacionOrigenCongelado(supabase, ubicacion_destino_id);
+
   // Solo se puede corregir mientras no se haya cerrado (resuelto=false); una
   // vez cerrado ya generó su movimiento de merma y no debe tocarse aquí.
-  const { error } = await supabase
-    .from("partes_horneado")
-    .update({ cantidad })
-    .eq("id", id)
-    .eq("resuelto", false);
+  // El traspaso de Obrador se ajusta por la diferencia, no se reescribe.
+  const { error } = await supabase.rpc("actualizar_horneado", {
+    p_id: id,
+    p_nueva_cantidad: cantidad,
+    p_ubicacion_origen_id: ubicacion_origen_id,
+  });
   if (error) throw new Error(error.message);
 
+  revalidatePath("/");
   revalidatePath("/mermas/hornear");
 }
 
@@ -111,15 +132,20 @@ export async function eliminarHorneado(formData: FormData) {
   const supabase = await createClient();
 
   const id = String(formData.get("id") ?? "");
-  if (!id) throw new Error("Falta el registro a eliminar");
+  const ubicacion_destino_id = String(formData.get("ubicacion_destino_id") ?? "");
+  if (!id || !ubicacion_destino_id) throw new Error("Falta el registro a eliminar");
 
-  const { error } = await supabase
-    .from("partes_horneado")
-    .delete()
-    .eq("id", id)
-    .eq("resuelto", false);
+  const ubicacion_origen_id = await ubicacionOrigenCongelado(supabase, ubicacion_destino_id);
+
+  // Revierte el traspaso a Obrador (si lo hubo) con un movimiento de vuelta,
+  // en vez de tocar los movimientos ya insertados.
+  const { error } = await supabase.rpc("eliminar_horneado", {
+    p_id: id,
+    p_ubicacion_origen_id: ubicacion_origen_id,
+  });
   if (error) throw new Error(error.message);
 
+  revalidatePath("/");
   revalidatePath("/mermas/hornear");
 }
 

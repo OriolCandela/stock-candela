@@ -49,13 +49,14 @@ export default async function HornearPage() {
           🌅 Horneado de hoy
         </h1>
         <p className="text-sm text-zinc-500">
-          Marca cuántas unidades de cada sabor has horneado hoy. No afecta al
-          stock (ya se descontó al formar); es solo para poder decidir mañana
-          al cierre cuánto sobra de este lote.
+          Marca cuántas unidades de cada sabor has horneado hoy. Si lo formado
+          está congelado en el Obrador, se traspasa automáticamente de ahí a
+          esta ubicación; es también lo que permite decidir mañana al cierre
+          cuánto sobra de este lote.
         </p>
       </header>
 
-      <HorneadoHoyLista entradas={entradasHoy} />
+      <HorneadoHoyLista entradas={entradasHoy} ubicacionDestinoId={seleccionada?.id ?? ""} />
 
       {!productos || productos.length === 0 ? (
         <p className="rounded-lg bg-amber-50 px-4 py-3 text-sm text-amber-800">

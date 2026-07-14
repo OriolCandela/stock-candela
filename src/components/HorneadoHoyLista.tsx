@@ -10,7 +10,13 @@ type Entrada = {
   cantidad: number;
 };
 
-function Fila({ entrada }: { entrada: Entrada }) {
+function Fila({
+  entrada,
+  ubicacionDestinoId,
+}: {
+  entrada: Entrada;
+  ubicacionDestinoId: string;
+}) {
   const [cantidad, setCantidad] = useState(String(entrada.cantidad));
   const [editando, setEditando] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -21,6 +27,7 @@ function Fila({ entrada }: { entrada: Entrada }) {
     const formData = new FormData();
     formData.set("id", entrada.id);
     formData.set("cantidad", cantidad);
+    formData.set("ubicacion_destino_id", ubicacionDestinoId);
     startTransition(async () => {
       try {
         await actualizarHorneado(formData);
@@ -36,6 +43,7 @@ function Fila({ entrada }: { entrada: Entrada }) {
     setError(null);
     const formData = new FormData();
     formData.set("id", entrada.id);
+    formData.set("ubicacion_destino_id", ubicacionDestinoId);
     startTransition(async () => {
       try {
         await eliminarHorneado(formData);
@@ -97,7 +105,13 @@ function Fila({ entrada }: { entrada: Entrada }) {
   );
 }
 
-export function HorneadoHoyLista({ entradas }: { entradas: Entrada[] }) {
+export function HorneadoHoyLista({
+  entradas,
+  ubicacionDestinoId,
+}: {
+  entradas: Entrada[];
+  ubicacionDestinoId: string;
+}) {
   if (entradas.length === 0) return null;
 
   return (
@@ -107,7 +121,7 @@ export function HorneadoHoyLista({ entradas }: { entradas: Entrada[] }) {
       </span>
       <ul className="flex flex-col divide-y divide-zinc-200 overflow-hidden rounded-lg border border-zinc-200 bg-white">
         {entradas.map((e) => (
-          <Fila key={e.id} entrada={e} />
+          <Fila key={e.id} entrada={e} ubicacionDestinoId={ubicacionDestinoId} />
         ))}
       </ul>
     </div>
