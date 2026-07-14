@@ -40,6 +40,41 @@ export async function guardarArticulo(formData: FormData) {
   redirect("/catalogo");
 }
 
+const TABLAS_CON_REFERENCIA_ARTICULO = [
+  { tabla: "movimientos", columna: "articulo_id" },
+  { tabla: "mermas", columna: "articulo_id" },
+  { tabla: "escandallos", columna: "producto_id" },
+  { tabla: "escandallo_lineas", columna: "ingrediente_id" },
+  { tabla: "albaran_lineas", columna: "articulo_id" },
+  { tabla: "ventas_import", columna: "articulo_id" },
+  { tabla: "inventario_lineas", columna: "articulo_id" },
+  { tabla: "transferencia_lineas", columna: "articulo_id" },
+  { tabla: "alias_proveedor", columna: "articulo_id" },
+] as const;
+
+export async function eliminarArticulo(id: string) {
+  const supabase = await createClient();
+
+  for (const { tabla, columna } of TABLAS_CON_REFERENCIA_ARTICULO) {
+    const { count, error } = await supabase
+      .from(tabla)
+      .select("id", { count: "exact", head: true })
+      .eq(columna as "id", id);
+    if (error) throw new Error(error.message);
+    if (count && count > 0) {
+      throw new Error(
+        "Este artículo tiene historial (movimientos, producción, albaranes...) y no se puede eliminar para no romper el libro de movimientos. Desactívalo en su lugar desde el formulario de edición."
+      );
+    }
+  }
+
+  const { error } = await supabase.from("articulos").delete().eq("id", id);
+  if (error) throw new Error(error.message);
+
+  revalidatePath("/catalogo");
+  redirect("/catalogo");
+}
+
 export async function guardarProveedor(formData: FormData) {
   const supabase = await createClient();
 

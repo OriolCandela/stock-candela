@@ -146,44 +146,19 @@ export async function mapearVenta(formData: FormData) {
 export async function confirmarVentas() {
   const supabase = await createClient();
 
-  const { data: pendientes, error } = await supabase
+  const { count, error: errorCount } = await supabase
     .from("ventas_import")
-    .select("id, ubicacion_id, articulo_id, unidades")
+    .select("id", { count: "exact", head: true })
     .eq("procesado", false);
-  if (error) throw new Error(error.message);
-  if (!pendientes || pendientes.length === 0) {
+  if (errorCount) throw new Error(errorCount.message);
+  if (!count) {
     redirect("/ventas?ok=1");
   }
 
-  if (pendientes.some((v) => !v.articulo_id)) {
-    throw new Error("Todavía hay ventas sin artículo asignado");
-  }
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  const { error: errorMovimientos } = await supabase.from("movimientos").insert(
-    pendientes.map((v) => ({
-      tipo: "venta" as const,
-      articulo_id: v.articulo_id as string,
-      ubicacion_id: v.ubicacion_id,
-      cantidad: -v.unidades,
-      ref_tabla: "ventas_import",
-      ref_id: v.id,
-      usuario_id: user?.id ?? null,
-    }))
-  );
-  if (errorMovimientos) throw new Error(errorMovimientos.message);
-
-  const { error: errorUpdate } = await supabase
-    .from("ventas_import")
-    .update({ procesado: true })
-    .in(
-      "id",
-      pendientes.map((v) => v.id)
-    );
-  if (errorUpdate) throw new Error(errorUpdate.message);
+  // Inserta los movimientos de venta y marca las filas como procesadas en una
+  // única transacción, para que un fallo a mitad no pueda duplicar ventas al reintentar.
+  const { error } = await supabase.rpc("confirmar_ventas");
+  if (error) throw new Error(error.message);
 
   revalidatePath("/");
   revalidatePath("/ventas");

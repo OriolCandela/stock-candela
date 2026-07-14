@@ -99,45 +99,13 @@ export async function registrarCierreMermas(formData: FormData) {
     throw new Error("No hay lotes de ayer pendientes de cerrar");
   }
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  for (const l of lineas) {
-    if (l.cantidad_tirada > 0) {
-      const { data: merma, error: errorMerma } = await supabase
-        .from("mermas")
-        .insert({
-          articulo_id: l.articulo_id,
-          ubicacion_id,
-          cantidad: l.cantidad_tirada,
-          motivo: "caducado",
-          notas: "Cierre: sobrante de lo horneado el día anterior",
-          parte_horneado_id: l.parte_horneado_id,
-          usuario_id: user?.id ?? null,
-        })
-        .select("id")
-        .single();
-      if (errorMerma || !merma) throw new Error(errorMerma?.message ?? "Error al registrar la merma");
-
-      const { error: errorMovimiento } = await supabase.from("movimientos").insert({
-        tipo: "merma",
-        articulo_id: l.articulo_id,
-        ubicacion_id,
-        cantidad: -l.cantidad_tirada,
-        ref_tabla: "mermas",
-        ref_id: merma.id,
-        usuario_id: user?.id ?? null,
-      });
-      if (errorMovimiento) throw new Error(errorMovimiento.message);
-    }
-
-    const { error: errorResuelto } = await supabase
-      .from("partes_horneado")
-      .update({ resuelto: true })
-      .eq("id", l.parte_horneado_id);
-    if (errorResuelto) throw new Error(errorResuelto.message);
-  }
+  // Registrar la merma tirada, su movimiento de stock y marcar el parte de
+  // horneado como resuelto: todo en una única transacción por lote.
+  const { error } = await supabase.rpc("registrar_cierre_mermas", {
+    p_ubicacion_id: ubicacion_id,
+    p_lineas: lineas,
+  });
+  if (error) throw new Error(error.message);
 
   revalidatePath("/");
   revalidatePath("/mermas");

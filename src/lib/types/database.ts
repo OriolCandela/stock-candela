@@ -427,6 +427,30 @@ export interface Database {
         Relationships: [];
       };
     };
-    Functions: Record<string, never>;
+    Functions: {
+      confirmar_albaran: {
+        Args: { p_albaran_id: string };
+        Returns: void;
+      };
+      cerrar_inventario: {
+        Args: { p_inventario_id: string; p_lineas: { articulo_id: string; cantidad_contada: number }[] };
+        Returns: void;
+      };
+      confirmar_ventas: {
+        Args: Record<string, never>;
+        Returns: number;
+      };
+      registrar_formado: {
+        Args: { p_ubicacion_id: string; p_lineas: { escandallo_id: string; unidades: number }[] };
+        Returns: void;
+      };
+      registrar_cierre_mermas: {
+        Args: {
+          p_ubicacion_id: string;
+          p_lineas: { parte_horneado_id: string; articulo_id: string; cantidad_tirada: number }[];
+        };
+        Returns: void;
+      };
+    };
   };
 }

@@ -1,9 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useTransition } from "react";
 import { useFormStatus } from "react-dom";
 import { unstable_rethrow } from "next/navigation";
-import { guardarArticulo } from "@/app/(app)/catalogo/actions";
+import { guardarArticulo, eliminarArticulo } from "@/app/(app)/catalogo/actions";
 import { ETIQUETA_TIPO_ARTICULO, TIPOS_ARTICULO } from "@/lib/constants";
 
 function BotonEnviar() {
@@ -37,6 +37,27 @@ export function ArticuloForm({
   unidades: string[];
 }) {
   const [error, setError] = useState<string | null>(null);
+  const [isDeleting, startDelete] = useTransition();
+
+  function handleEliminar() {
+    if (!articulo) return;
+    if (
+      !window.confirm(
+        `¿Eliminar "${articulo.nombre}"? Esta acción no se puede deshacer.`
+      )
+    )
+      return;
+
+    setError(null);
+    startDelete(async () => {
+      try {
+        await eliminarArticulo(articulo.id);
+      } catch (err) {
+        unstable_rethrow(err);
+        setError(err instanceof Error ? err.message : "Error al eliminar el artículo");
+      }
+    });
+  }
 
   return (
     <form
@@ -154,6 +175,17 @@ export function ArticuloForm({
       )}
 
       <BotonEnviar />
+
+      {articulo && (
+        <button
+          type="button"
+          onClick={handleEliminar}
+          disabled={isDeleting}
+          className="w-full rounded-lg border border-red-200 px-4 py-3 text-base font-medium text-red-700 transition-colors hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50"
+        >
+          {isDeleting ? "Eliminando…" : "Eliminar artículo"}
+        </button>
+      )}
     </form>
   );
 }

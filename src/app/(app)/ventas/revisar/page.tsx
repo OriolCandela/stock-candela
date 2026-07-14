@@ -3,8 +3,8 @@ import { createClient } from "@/lib/supabase/server";
 import {
   mapearVenta,
   confirmarVentas,
-  ignorarVenta,
 } from "@/app/(app)/ventas/actions";
+import { BotonIgnorarVenta } from "@/components/BotonIgnorarVenta";
 
 export default async function RevisarVentasPage({
   searchParams,
@@ -92,15 +92,7 @@ export default async function RevisarVentasPage({
                         Asignar
                       </button>
                     </form>
-                    <form action={ignorarVenta}>
-                      <input type="hidden" name="venta_id" value={v.id} />
-                      <button
-                        type="submit"
-                        className="text-xs text-zinc-400 hover:text-red-600"
-                      >
-                        No es un artículo, ignorar siempre
-                      </button>
-                    </form>
+                    <BotonIgnorarVenta ventaId={v.id} />
                   </li>
                 ))}
               </ul>
