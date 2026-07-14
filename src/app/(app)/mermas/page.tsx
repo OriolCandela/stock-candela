@@ -63,7 +63,7 @@ export default async function MermasPage({
           href="/mermas/cierre"
           className="rounded-lg border border-zinc-300 bg-white px-4 py-3 text-center text-sm font-medium text-zinc-900 hover:bg-zinc-50"
         >
-          🌙 Cierre de ayer
+          🌙 Merma de horneado
         </Link>
       </div>
 

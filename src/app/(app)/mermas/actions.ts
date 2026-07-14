@@ -82,7 +82,45 @@ export async function registrarHorneado(formData: FormData) {
   if (error) throw new Error(error.message);
 
   revalidatePath("/mermas");
+  revalidatePath("/mermas/hornear");
   redirect("/mermas?horneado=1");
+}
+
+export async function actualizarHorneado(formData: FormData) {
+  const supabase = await createClient();
+
+  const id = String(formData.get("id") ?? "");
+  const cantidad = Number(formData.get("cantidad"));
+  if (!id || !Number.isFinite(cantidad) || cantidad <= 0) {
+    throw new Error("Cantidad no válida");
+  }
+
+  // Solo se puede corregir mientras no se haya cerrado (resuelto=false); una
+  // vez cerrado ya generó su movimiento de merma y no debe tocarse aquí.
+  const { error } = await supabase
+    .from("partes_horneado")
+    .update({ cantidad })
+    .eq("id", id)
+    .eq("resuelto", false);
+  if (error) throw new Error(error.message);
+
+  revalidatePath("/mermas/hornear");
+}
+
+export async function eliminarHorneado(formData: FormData) {
+  const supabase = await createClient();
+
+  const id = String(formData.get("id") ?? "");
+  if (!id) throw new Error("Falta el registro a eliminar");
+
+  const { error } = await supabase
+    .from("partes_horneado")
+    .delete()
+    .eq("id", id)
+    .eq("resuelto", false);
+  if (error) throw new Error(error.message);
+
+  revalidatePath("/mermas/hornear");
 }
 
 type LineaCierre = { parte_horneado_id: string; articulo_id: string; cantidad_tirada: number };
@@ -96,7 +134,7 @@ export async function registrarCierreMermas(formData: FormData) {
 
   const lineas: LineaCierre[] = JSON.parse(lineasJson);
   if (lineas.length === 0) {
-    throw new Error("No hay lotes de ayer pendientes de cerrar");
+    throw new Error("No hay lotes pendientes de cerrar");
   }
 
   // Registrar la merma tirada, su movimiento de stock y marcar el parte de
