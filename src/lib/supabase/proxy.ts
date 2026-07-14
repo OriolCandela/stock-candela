@@ -32,9 +32,17 @@ export async function updateSession(request: NextRequest) {
   const isLoginRoute = request.nextUrl.pathname.startsWith("/login");
 
   if (!user && !isLoginRoute) {
+    // Rewrite (not redirect) so the browser keeps the original URL. Los
+    // enlaces de invitación/recuperación de Supabase llegan con el token en
+    // el fragmento (#access_token=...), que el navegador nunca envía al
+    // servidor; un redirect a otra ruta puede perder ese fragmento por el
+    // camino. Con rewrite no hay navegación real, así que el fragmento se
+    // mantiene intacto y el login.tsx puede leerlo.
     const url = request.nextUrl.clone();
     url.pathname = "/login";
-    return NextResponse.redirect(url);
+    const rewritten = NextResponse.rewrite(url);
+    response.cookies.getAll().forEach((cookie) => rewritten.cookies.set(cookie));
+    return rewritten;
   }
 
   if (user && isLoginRoute) {
