@@ -88,7 +88,6 @@ export function EscanearForm({
           name="foto"
           type="file"
           accept="image/*,application/pdf"
-          capture="environment"
           required
           onChange={onArchivoCambia}
           className="w-full rounded-lg border border-zinc-300 bg-white px-3 py-2.5 text-sm file:mr-3 file:rounded-md file:border-0 file:bg-zinc-900 file:px-3 file:py-1.5 file:text-sm file:font-medium file:text-white"
