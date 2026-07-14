@@ -36,12 +36,20 @@ export default async function AlbaranesPage({
             Albaranes
           </h1>
         </div>
-        <Link
-          href="/albaranes/nuevo"
-          className="rounded-lg bg-zinc-900 px-4 py-2 text-sm font-medium text-white hover:bg-zinc-800"
-        >
-          + Nuevo
-        </Link>
+        <div className="flex gap-2">
+          <Link
+            href="/albaranes/escanear"
+            className="rounded-lg border border-zinc-300 bg-white px-4 py-2 text-sm font-medium text-zinc-900 hover:bg-zinc-50"
+          >
+            📷 Escanear
+          </Link>
+          <Link
+            href="/albaranes/nuevo"
+            className="rounded-lg bg-zinc-900 px-4 py-2 text-sm font-medium text-white hover:bg-zinc-800"
+          >
+            + Nuevo
+          </Link>
+        </div>
       </header>
 
       {confirmado && (

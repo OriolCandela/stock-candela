@@ -19,10 +19,18 @@ export default async function AlbaranDetallePage({
 
   const { data: albaran } = await supabase
     .from("albaranes")
-    .select("id, numero, fecha, estado, proveedor_id, ubicacion_id")
+    .select("id, numero, fecha, estado, proveedor_id, ubicacion_id, foto_path")
     .eq("id", id)
     .single();
   if (!albaran) notFound();
+
+  const fotoUrl = albaran.foto_path
+    ? (
+        await supabase.storage
+          .from("albaranes")
+          .createSignedUrl(albaran.foto_path, 60 * 60)
+      ).data?.signedUrl
+    : null;
 
   const [{ data: lineas }, { data: proveedor }, { data: ubicacion }] =
     await Promise.all([
@@ -75,6 +83,17 @@ export default async function AlbaranDetallePage({
           {albaran.fecha} · {ubicacion?.nombre}
         </p>
       </header>
+
+      {fotoUrl && (
+        <a
+          href={fotoUrl}
+          target="_blank"
+          rel="noreferrer"
+          className="text-sm font-medium text-zinc-600 underline hover:text-zinc-900"
+        >
+          📄 Ver documento original
+        </a>
+      )}
 
       <ul className="flex flex-col divide-y divide-zinc-200 overflow-hidden rounded-lg border border-zinc-200 bg-white">
         {(lineas ?? []).map((l) => {
