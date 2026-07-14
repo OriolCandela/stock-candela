@@ -53,7 +53,10 @@ export default async function DashboardPage({
         <SignOutButton />
       </header>
 
-      <StockTable filas={filas ?? []} />
+      <StockTable
+        filas={filas ?? []}
+        ubicacionId={ubicacionSeleccionada?.id}
+      />
     </div>
   );
 }

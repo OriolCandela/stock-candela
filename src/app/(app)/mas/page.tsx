@@ -7,6 +7,7 @@ const ENLACES = [
   { href: "/catalogo/escandallos", label: "Escandallos", icon: "🧾" },
   { href: "/albaranes", label: "Recepción de albaranes", icon: "📥" },
   { href: "/ventas", label: "Import de ventas", icon: "🧮" },
+  { href: "/transferencias", label: "Traslados entre ubicaciones", icon: "🔄" },
   { href: "/ajustes", label: "Ajustes de stock", icon: "⚖️" },
   { href: "/configuracion", label: "Configuración", icon: "⚙️" },
 ];

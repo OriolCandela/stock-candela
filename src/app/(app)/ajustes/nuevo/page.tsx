@@ -3,9 +3,14 @@ import { createClient } from "@/lib/supabase/server";
 import { getUbicacionActiva } from "@/lib/ubicacion";
 import { AjusteForm } from "@/components/AjusteForm";
 
-export default async function NuevoAjustePage() {
+export default async function NuevoAjustePage({
+  searchParams,
+}: {
+  searchParams: Promise<{ articulo?: string; ubicacion?: string }>;
+}) {
+  const { articulo, ubicacion } = await searchParams;
   const supabase = await createClient();
-  const { ubicaciones, seleccionada } = await getUbicacionActiva();
+  const { ubicaciones, seleccionada } = await getUbicacionActiva(ubicacion);
 
   const [{ data: articulos }, { data: stock }] = await Promise.all([
     supabase
@@ -54,6 +59,7 @@ export default async function NuevoAjustePage() {
           articulos={articulosConStock}
           ubicaciones={ubicaciones}
           ubicacionSeleccionadaId={seleccionada?.id}
+          articuloSeleccionadoId={articulo}
         />
       )}
     </div>

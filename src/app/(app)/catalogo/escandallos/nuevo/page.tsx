@@ -11,7 +11,7 @@ export default async function NuevoEscandalloPage() {
     .order("nombre");
 
   const productos = (articulos ?? []).filter(
-    (a) => a.tipo === "producto_terminado"
+    (a) => a.tipo === "producto_terminado" || a.tipo === "semielaborado"
   );
   const ingredientes = (articulos ?? []).filter(
     (a) => a.tipo !== "producto_terminado"
@@ -34,7 +34,7 @@ export default async function NuevoEscandalloPage() {
       {productos.length === 0 ? (
         <p className="rounded-lg bg-amber-50 px-4 py-3 text-sm text-amber-800">
           Primero da de alta un artículo de tipo &quot;Producto terminado&quot;
-          en el catálogo.
+          o &quot;Semielaborado&quot; en el catálogo.
         </p>
       ) : (
         <EscandalloForm productos={productos} ingredientes={ingredientes} />

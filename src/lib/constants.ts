@@ -2,6 +2,7 @@ export const ETIQUETA_TIPO_ARTICULO: Record<string, string> = {
   materia_prima: "Materia prima",
   producto_terminado: "Producto terminado",
   consumible: "Consumible",
+  semielaborado: "Semielaborado",
 };
 
 export const ETIQUETA_MOTIVO_MERMA: Record<string, string> = {
@@ -16,6 +17,7 @@ export const TIPOS_ARTICULO = [
   "materia_prima",
   "producto_terminado",
   "consumible",
+  "semielaborado",
 ] as const;
 export const MOTIVOS_MERMA = [
   "caducado",

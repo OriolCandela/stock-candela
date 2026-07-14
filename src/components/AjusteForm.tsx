@@ -14,12 +14,14 @@ export function AjusteForm({
   articulos,
   ubicaciones,
   ubicacionSeleccionadaId,
+  articuloSeleccionadoId,
 }: {
   articulos: Articulo[];
   ubicaciones: { id: string; nombre: string }[];
   ubicacionSeleccionadaId?: string;
+  articuloSeleccionadoId?: string;
 }) {
-  const [articuloId, setArticuloId] = useState("");
+  const [articuloId, setArticuloId] = useState(articuloSeleccionadoId ?? "");
   const [cantidadContada, setCantidadContada] = useState("");
 
   const articulo = useMemo(
@@ -77,6 +79,7 @@ export function AjusteForm({
           step="any"
           min="0"
           required
+          autoFocus={!!articuloSeleccionadoId}
           value={cantidadContada}
           onChange={(e) => setCantidadContada(e.target.value)}
           className="w-full rounded-lg border border-zinc-300 px-4 py-3 text-lg focus:border-zinc-500 focus:outline-none focus:ring-1 focus:ring-zinc-500"

@@ -1,4 +1,8 @@
-export type TipoArticulo = "materia_prima" | "producto_terminado" | "consumible";
+export type TipoArticulo =
+  | "materia_prima"
+  | "producto_terminado"
+  | "consumible"
+  | "semielaborado";
 export type UnidadBase = string;
 export type TipoMovimiento =
   | "compra"

@@ -21,11 +21,19 @@ export default async function MermasPage({
 
   return (
     <div className="mx-auto flex w-full max-w-2xl flex-1 flex-col gap-4 px-4 py-6">
-      <header>
-        <Link href="/" className="text-sm text-zinc-500 hover:text-zinc-900">
-          ← Stock
+      <header className="flex items-center justify-between gap-3">
+        <div>
+          <Link href="/" className="text-sm text-zinc-500 hover:text-zinc-900">
+            ← Stock
+          </Link>
+          <h1 className="mt-1 text-lg font-semibold text-zinc-900">Merma</h1>
+        </div>
+        <Link
+          href="/mermas/informe"
+          className="text-sm font-medium text-zinc-600 hover:text-zinc-900"
+        >
+          Ver informe →
         </Link>
-        <h1 className="mt-1 text-lg font-semibold text-zinc-900">Merma</h1>
       </header>
 
       {ok && (

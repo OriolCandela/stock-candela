@@ -1,6 +1,9 @@
 import { createClient } from "@/lib/supabase/server";
 
-export async function getUbicacionActiva(ubicacionId?: string) {
+export async function getUbicacionActiva(
+  ubicacionId?: string,
+  preferirNombre?: string
+) {
   const supabase = await createClient();
   const { data: ubicaciones } = await supabase
     .from("ubicaciones")
@@ -9,7 +12,11 @@ export async function getUbicacionActiva(ubicacionId?: string) {
     .order("nombre");
 
   const seleccionada =
-    ubicaciones?.find((u) => u.id === ubicacionId) ?? ubicaciones?.[0];
+    ubicaciones?.find((u) => u.id === ubicacionId) ??
+    (preferirNombre
+      ? ubicaciones?.find((u) => u.nombre === preferirNombre)
+      : undefined) ??
+    ubicaciones?.[0];
 
   return { ubicaciones: ubicaciones ?? [], seleccionada };
 }

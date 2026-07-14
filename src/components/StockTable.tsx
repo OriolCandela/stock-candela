@@ -1,6 +1,8 @@
 "use client";
 
+import Link from "next/link";
 import { useMemo, useState } from "react";
+import { ETIQUETA_TIPO_ARTICULO } from "@/lib/constants";
 
 type FilaStock = {
   articulo_id: string;
@@ -12,13 +14,13 @@ type FilaStock = {
   bajo_minimo: boolean;
 };
 
-const ETIQUETA_TIPO: Record<string, string> = {
-  materia_prima: "Materia prima",
-  producto_terminado: "Producto terminado",
-  consumible: "Consumible",
-};
-
-export function StockTable({ filas }: { filas: FilaStock[] }) {
+export function StockTable({
+  filas,
+  ubicacionId,
+}: {
+  filas: FilaStock[];
+  ubicacionId?: string;
+}) {
   const [busqueda, setBusqueda] = useState("");
 
   const filasFiltradas = useMemo(() => {
@@ -54,9 +56,12 @@ export function StockTable({ filas }: { filas: FilaStock[] }) {
           </li>
         )}
         {filasFiltradas.map((f) => (
-          <li
+          <Link
             key={f.articulo_id}
-            className={`flex items-center justify-between gap-3 px-4 py-3 ${
+            href={`/ajustes/nuevo?articulo=${f.articulo_id}${
+              ubicacionId ? `&ubicacion=${ubicacionId}` : ""
+            }`}
+            className={`flex items-center justify-between gap-3 px-4 py-3 hover:bg-zinc-50 ${
               f.bajo_minimo ? "bg-red-50" : ""
             }`}
           >
@@ -65,7 +70,7 @@ export function StockTable({ filas }: { filas: FilaStock[] }) {
                 {f.articulo}
               </span>
               <span className="text-xs text-zinc-500">
-                {ETIQUETA_TIPO[f.tipo] ?? f.tipo}
+                {ETIQUETA_TIPO_ARTICULO[f.tipo] ?? f.tipo}
               </span>
             </div>
             <div className="flex flex-col items-end shrink-0">
@@ -82,7 +87,7 @@ export function StockTable({ filas }: { filas: FilaStock[] }) {
                 </span>
               )}
             </div>
-          </li>
+          </Link>
         ))}
       </ul>
     </div>
