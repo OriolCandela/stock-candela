@@ -14,6 +14,10 @@ export async function registrarFormado(formData: FormData) {
 
   const ubicacion_id = String(formData.get("ubicacion_id") ?? "");
   const lineasJson = String(formData.get("lineas") ?? "[]");
+  const hoy = new Date().toISOString().slice(0, 10);
+  const fechaEnviada = String(formData.get("fecha") ?? "");
+  // Nunca aceptar una fecha futura, aunque el input del navegador lo permitiera.
+  const fecha = fechaEnviada && fechaEnviada <= hoy ? fechaEnviada : hoy;
 
   if (!ubicacion_id) throw new Error("Falta la ubicación");
 
@@ -30,10 +34,11 @@ export async function registrarFormado(formData: FormData) {
   const { error } = await supabase.rpc("registrar_formado", {
     p_ubicacion_id: ubicacion_id,
     p_lineas: lineasValidas,
+    p_fecha: fecha,
   });
   if (error) throw new Error(error.message);
 
   revalidatePath("/");
   revalidatePath("/formado");
-  redirect("/formado?ok=1");
+  redirect(`/formado?ok=1&fecha=${fecha}`);
 }

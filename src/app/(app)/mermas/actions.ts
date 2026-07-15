@@ -77,6 +77,10 @@ export async function registrarHorneado(formData: FormData) {
 
   const ubicacion_id = String(formData.get("ubicacion_id") ?? "");
   const lineasJson = String(formData.get("lineas") ?? "[]");
+  const hoy = new Date().toISOString().slice(0, 10);
+  const fechaEnviada = String(formData.get("fecha") ?? "");
+  // Nunca aceptar una fecha futura, aunque el input del navegador lo permitiera.
+  const fecha = fechaEnviada && fechaEnviada <= hoy ? fechaEnviada : hoy;
   if (!ubicacion_id) throw new Error("Falta la ubicación");
 
   const lineas: LineaHorneado[] = JSON.parse(lineasJson);
@@ -93,13 +97,14 @@ export async function registrarHorneado(formData: FormData) {
     p_ubicacion_destino_id: ubicacion_id,
     p_ubicacion_origen_id: ubicacion_origen_id,
     p_lineas: lineasValidas,
+    p_fecha: fecha,
   });
   if (error) throw new Error(error.message);
 
   revalidatePath("/");
   revalidatePath("/mermas");
   revalidatePath("/mermas/hornear");
-  redirect("/mermas?horneado=1");
+  redirect(`/mermas/hornear?fecha=${fecha}`);
 }
 
 export async function actualizarHorneado(formData: FormData) {

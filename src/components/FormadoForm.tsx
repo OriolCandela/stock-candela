@@ -30,10 +30,12 @@ export function FormadoForm({
   escandallos,
   ubicaciones,
   ubicacionSeleccionadaId,
+  fecha,
 }: {
   escandallos: Escandallo[];
   ubicaciones: { id: string; nombre: string }[];
   ubicacionSeleccionadaId?: string;
+  fecha: string;
 }) {
   const [lineas, setLineas] = useState<Linea[]>([
     { escandallo_id: "", unidades: "" },
@@ -76,6 +78,7 @@ export function FormadoForm({
       className="flex flex-col gap-4"
     >
       <input type="hidden" name="lineas" value={lineasJson} />
+      <input type="hidden" name="fecha" value={fecha} />
 
       {ubicaciones.length > 1 ? (
         <div className="flex flex-col gap-1.5">
@@ -104,7 +107,7 @@ export function FormadoForm({
 
       <div className="flex flex-col gap-3">
         <span className="text-sm font-medium text-zinc-700">
-          Sabores formados hoy
+          Sabores formados
         </span>
         {lineas.map((linea, i) => (
           <div key={i} className="flex gap-2">

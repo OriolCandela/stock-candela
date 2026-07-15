@@ -77,7 +77,7 @@ export default async function HornearPage({
         <p className="text-sm text-zinc-500">
           {esHoy
             ? "Marca cuántas unidades de cada sabor has horneado hoy. Si lo formado está congelado en el Obrador, se traspasa automáticamente de ahí a esta ubicación; es también lo que permite decidir mañana al cierre cuánto sobra de este lote."
-            : "Consultando un día anterior. Solo se puede corregir o eliminar mientras el lote siga pendiente de cierre."}
+            : "Consultando un día anterior. Puedes añadir un registro que se te olvidó, o corregir/eliminar mientras el lote siga pendiente de cierre."}
         </p>
       </header>
 
@@ -109,18 +109,18 @@ export default async function HornearPage({
         titulo={esHoy ? "Ya registrado hoy" : `Registrado el ${etiquetaFecha(fecha)}`}
       />
 
-      {esHoy &&
-        (!productos || productos.length === 0 ? (
-          <p className="rounded-lg bg-amber-50 px-4 py-3 text-sm text-amber-800">
-            No hay productos terminados en el catálogo.
-          </p>
-        ) : (
-          <HornearForm
-            ubicaciones={ubicaciones}
-            ubicacionSeleccionadaId={seleccionada?.id}
-            productos={productos}
-          />
-        ))}
+      {!productos || productos.length === 0 ? (
+        <p className="rounded-lg bg-amber-50 px-4 py-3 text-sm text-amber-800">
+          No hay productos terminados en el catálogo.
+        </p>
+      ) : (
+        <HornearForm
+          ubicaciones={ubicaciones}
+          ubicacionSeleccionadaId={seleccionada?.id}
+          productos={productos}
+          fecha={fecha}
+        />
+      )}
     </div>
   );
 }

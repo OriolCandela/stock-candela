@@ -7,7 +7,7 @@ import { registrarHorneado } from "@/app/(app)/mermas/actions";
 
 type Producto = { id: string; nombre: string; unidad: string };
 
-function BotonEnviar() {
+function BotonEnviar({ esHoy }: { esHoy: boolean }) {
   const { pending } = useFormStatus();
   return (
     <button
@@ -15,7 +15,11 @@ function BotonEnviar() {
       disabled={pending}
       className="mt-2 w-full rounded-lg bg-zinc-900 px-4 py-3 text-base font-medium text-white transition-colors hover:bg-zinc-800 disabled:cursor-not-allowed disabled:opacity-50"
     >
-      {pending ? "Guardando…" : "Registrar horneado de hoy"}
+      {pending
+        ? "Guardando…"
+        : esHoy
+        ? "Registrar horneado de hoy"
+        : "Registrar horneado de este día"}
     </button>
   );
 }
@@ -24,13 +28,16 @@ export function HornearForm({
   ubicaciones,
   ubicacionSeleccionadaId,
   productos,
+  fecha,
 }: {
   ubicaciones: { id: string; nombre: string }[];
   ubicacionSeleccionadaId?: string;
   productos: Producto[];
+  fecha: string;
 }) {
   const [valores, setValores] = useState<Record<string, string>>({});
   const [error, setError] = useState<string | null>(null);
+  const esHoy = fecha === new Date().toISOString().slice(0, 10);
 
   const lineasJson = useMemo(
     () =>
@@ -55,6 +62,7 @@ export function HornearForm({
       className="flex flex-col gap-4"
     >
       <input type="hidden" name="lineas" value={lineasJson} />
+      <input type="hidden" name="fecha" value={fecha} />
 
       {ubicaciones.length > 1 ? (
         <div className="flex flex-col gap-1.5">
@@ -101,7 +109,7 @@ export function HornearForm({
         <p className="rounded-lg bg-red-50 px-4 py-3 text-sm text-red-800">{error}</p>
       )}
 
-      <BotonEnviar />
+      <BotonEnviar esHoy={esHoy} />
     </form>
   );
 }
