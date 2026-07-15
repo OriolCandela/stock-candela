@@ -70,70 +70,14 @@ export async function cerrarInventario(formData: FormData) {
     throw new Error("Cuenta al menos un artículo antes de cerrar el inventario");
   }
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  const { data: inventario, error: errorInv } = await supabase
-    .from("inventarios")
-    .select("id, ubicacion_id, cerrado")
-    .eq("id", inventario_id)
-    .single();
-  if (errorInv || !inventario) throw new Error("Inventario no encontrado");
-  if (inventario.cerrado) throw new Error("Este inventario ya está cerrado");
-
-  // 1. Guardar el conteo final tal cual llega del formulario
-  const { error: errorUpsert } = await supabase.from("inventario_lineas").upsert(
-    lineas.map((l) => ({
-      inventario_id,
-      articulo_id: l.articulo_id,
-      cantidad_contada: l.cantidad_contada,
-    })),
-    { onConflict: "inventario_id,articulo_id" }
-  );
-  if (errorUpsert) throw new Error(errorUpsert.message);
-
-  // 2. Stock teórico actual de la ubicación (una sola consulta)
-  const { data: stock, error: errorStock } = await supabase
-    .from("stock_actual")
-    .select("articulo_id, stock")
-    .eq("ubicacion_id", inventario.ubicacion_id);
-  if (errorStock) throw new Error(errorStock.message);
-  const teoricoPorArticulo = new Map(
-    (stock ?? []).map((s) => [s.articulo_id, s.stock as number])
-  );
-
-  // 3. Por cada línea contada: snapshot de la teórica + movimiento de ajuste si hay diferencia
-  for (const l of lineas) {
-    const teorica = teoricoPorArticulo.get(l.articulo_id) ?? 0;
-    const diferencia = l.cantidad_contada - teorica;
-
-    const { error: errorSnapshot } = await supabase
-      .from("inventario_lineas")
-      .update({ cantidad_teorica: teorica })
-      .eq("inventario_id", inventario_id)
-      .eq("articulo_id", l.articulo_id);
-    if (errorSnapshot) throw new Error(errorSnapshot.message);
-
-    if (diferencia !== 0) {
-      const { error: errorAjuste } = await supabase.from("movimientos").insert({
-        tipo: "ajuste",
-        articulo_id: l.articulo_id,
-        ubicacion_id: inventario.ubicacion_id,
-        cantidad: diferencia,
-        ref_tabla: "inventarios",
-        ref_id: inventario_id,
-        usuario_id: user?.id ?? null,
-      });
-      if (errorAjuste) throw new Error(errorAjuste.message);
-    }
-  }
-
-  const { error: errorCierre } = await supabase
-    .from("inventarios")
-    .update({ cerrado: true })
-    .eq("id", inventario_id);
-  if (errorCierre) throw new Error(errorCierre.message);
+  // Guardar el conteo, calcular la diferencia contra el stock teórico, insertar
+  // el movimiento de ajuste y marcar el inventario como cerrado: todo en una
+  // única transacción para que un fallo a mitad no dañe el libro de movimientos.
+  const { error } = await supabase.rpc("cerrar_inventario", {
+    p_inventario_id: inventario_id,
+    p_lineas: lineas,
+  });
+  if (error) throw new Error(error.message);
 
   revalidatePath("/");
   revalidatePath("/inventarios");

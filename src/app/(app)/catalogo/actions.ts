@@ -70,15 +70,14 @@ export async function guardarArticulo(formData: FormData) {
   redirect("/catalogo");
 }
 
-export async function eliminarArticulo(formData: FormData) {
+export async function eliminarArticulo(id: string) {
   const supabase = await createClient();
-  const id = String(formData.get("id") ?? "");
   if (!id) throw new Error("Falta el artículo");
 
   const referencias = await contarReferencias(supabase, id);
   if (referencias > 0) {
     throw new Error(
-      "Este artículo tiene historial (movimientos, ventas, mermas, escandallos...) y no se puede eliminar directamente. Fusiónalo con otro artículo para conservar el historial."
+      "Este artículo tiene historial (movimientos, ventas, mermas, escandallos...) y no se puede eliminar directamente. Fusiónalo con otro artículo para conservar el historial, o desactívalo en su lugar."
     );
   }
 
@@ -89,10 +88,8 @@ export async function eliminarArticulo(formData: FormData) {
   redirect("/catalogo?eliminado=1");
 }
 
-export async function fusionarArticulo(formData: FormData) {
+export async function fusionarArticulo(id_eliminar: string, id_mantener: string) {
   const supabase = await createClient();
-  const id_eliminar = String(formData.get("id_eliminar") ?? "");
-  const id_mantener = String(formData.get("id_mantener") ?? "");
   if (!id_eliminar || !id_mantener) throw new Error("Faltan artículos");
   if (id_eliminar === id_mantener) {
     throw new Error("Elige un artículo distinto para fusionar");

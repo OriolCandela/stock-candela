@@ -2,7 +2,6 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { ArticuloForm } from "@/components/ArticuloForm";
-import { EliminarArticuloBox } from "@/components/EliminarArticuloBox";
 
 export default async function EditarArticuloPage({
   params,
@@ -42,10 +41,6 @@ export default async function EditarArticuloPage({
       <ArticuloForm
         articulo={articulo}
         unidades={(unidades ?? []).map((u) => u.nombre)}
-      />
-
-      <EliminarArticuloBox
-        articuloId={articulo.id}
         otrosArticulos={otrosArticulos ?? []}
       />
     </div>

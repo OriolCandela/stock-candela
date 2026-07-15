@@ -1,9 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useTransition } from "react";
 import { useFormStatus } from "react-dom";
 import { unstable_rethrow } from "next/navigation";
-import { guardarArticulo } from "@/app/(app)/catalogo/actions";
+import {
+  guardarArticulo,
+  eliminarArticulo,
+  fusionarArticulo,
+} from "@/app/(app)/catalogo/actions";
 import { ETIQUETA_TIPO_ARTICULO, TIPOS_ARTICULO } from "@/lib/constants";
 
 function BotonEnviar() {
@@ -32,11 +36,57 @@ type ArticuloExistente = {
 export function ArticuloForm({
   articulo,
   unidades,
+  otrosArticulos = [],
 }: {
   articulo?: ArticuloExistente;
   unidades: string[];
+  otrosArticulos?: { id: string; nombre: string }[];
 }) {
   const [error, setError] = useState<string | null>(null);
+  const [necesitaFusion, setNecesitaFusion] = useState(false);
+  const [destinoFusion, setDestinoFusion] = useState("");
+  const [isDeleting, startDelete] = useTransition();
+  const [isFusionando, startFusion] = useTransition();
+
+  function handleEliminar() {
+    if (!articulo) return;
+    if (
+      !window.confirm(
+        `¿Eliminar "${articulo.nombre}"? Esta acción no se puede deshacer.`
+      )
+    )
+      return;
+
+    setError(null);
+    startDelete(async () => {
+      try {
+        await eliminarArticulo(articulo.id);
+      } catch (err) {
+        unstable_rethrow(err);
+        setNecesitaFusion(true);
+        setError(err instanceof Error ? err.message : "Error al eliminar el artículo");
+      }
+    });
+  }
+
+  function handleFusionar() {
+    if (!articulo || !destinoFusion) return;
+    if (
+      !window.confirm(
+        "Se moverá todo el historial de este artículo al que elijas, y este se eliminará. ¿Continuar?"
+      )
+    )
+      return;
+
+    startFusion(async () => {
+      try {
+        await fusionarArticulo(articulo.id, destinoFusion);
+      } catch (err) {
+        unstable_rethrow(err);
+        setError(err instanceof Error ? err.message : "Error al fusionar el artículo");
+      }
+    });
+  }
 
   return (
     <form
@@ -154,6 +204,42 @@ export function ArticuloForm({
       )}
 
       <BotonEnviar />
+
+      {articulo && (
+        <button
+          type="button"
+          onClick={handleEliminar}
+          disabled={isDeleting}
+          className="w-full rounded-lg border border-red-200 px-4 py-3 text-base font-medium text-red-700 transition-colors hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50"
+        >
+          {isDeleting ? "Eliminando…" : "Eliminar artículo"}
+        </button>
+      )}
+
+      {articulo && necesitaFusion && (
+        <div className="flex flex-col gap-2 rounded-lg border border-red-200 bg-red-50/60 p-3">
+          <select
+            value={destinoFusion}
+            onChange={(e) => setDestinoFusion(e.target.value)}
+            className="w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm focus:border-zinc-500 focus:outline-none focus:ring-1 focus:ring-zinc-500"
+          >
+            <option value="">Fusionar con...</option>
+            {otrosArticulos.map((a) => (
+              <option key={a.id} value={a.id}>
+                {a.nombre}
+              </option>
+            ))}
+          </select>
+          <button
+            type="button"
+            onClick={handleFusionar}
+            disabled={isFusionando || !destinoFusion}
+            className="w-full rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            {isFusionando ? "Fusionando…" : "Fusionar y eliminar"}
+          </button>
+        </div>
+      )}
     </form>
   );
 }

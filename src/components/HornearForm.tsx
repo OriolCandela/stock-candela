@@ -56,24 +56,6 @@ export function HornearForm({
     >
       <input type="hidden" name="lineas" value={lineasJson} />
 
-      <div className="flex flex-col gap-1.5">
-        <label htmlFor="fecha" className="text-sm font-medium text-zinc-700">
-          Fecha del horneado
-        </label>
-        <input
-          id="fecha"
-          name="fecha"
-          type="date"
-          required
-          max={new Date().toISOString().slice(0, 10)}
-          defaultValue={new Date().toISOString().slice(0, 10)}
-          className="w-full rounded-lg border border-zinc-300 px-4 py-3 text-base focus:border-zinc-500 focus:outline-none focus:ring-1 focus:ring-zinc-500"
-        />
-        <p className="text-xs text-zinc-500">
-          Por defecto hoy. Cámbiala si se te olvidó marcarlo el día que tocaba.
-        </p>
-      </div>
-
       {ubicaciones.length > 1 ? (
         <div className="flex flex-col gap-1.5">
           <label htmlFor="ubicacion_id" className="text-sm font-medium text-zinc-700">

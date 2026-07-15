@@ -26,7 +26,7 @@ export default async function MermasPage({
           <Link href="/" className="text-sm text-zinc-500 hover:text-zinc-900">
             ← Stock
           </Link>
-          <h1 className="mt-1 text-lg font-semibold text-zinc-900">Merma</h1>
+          <h1 className="mt-1 text-lg font-semibold text-zinc-900">Horneado</h1>
         </div>
         <Link
           href="/mermas/informe"
@@ -63,7 +63,7 @@ export default async function MermasPage({
           href="/mermas/cierre"
           className="rounded-lg border border-zinc-300 bg-white px-4 py-3 text-center text-sm font-medium text-zinc-900 hover:bg-zinc-50"
         >
-          🌙 Cierre de ayer
+          🌙 Merma de horneado
         </Link>
       </div>
 
