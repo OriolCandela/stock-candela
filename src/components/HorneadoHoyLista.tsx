@@ -8,6 +8,7 @@ type Entrada = {
   nombre: string;
   unidad: string;
   cantidad: number;
+  resuelto: boolean;
 };
 
 function Fila({
@@ -82,21 +83,27 @@ function Fila({
             <span className="text-sm text-zinc-500">
               {entrada.cantidad} {entrada.unidad}
             </span>
-            <button
-              type="button"
-              onClick={() => setEditando(true)}
-              className="text-sm text-zinc-500 hover:text-zinc-900"
-            >
-              Corregir
-            </button>
-            <button
-              type="button"
-              onClick={eliminar}
-              disabled={pendiente}
-              className="text-sm text-red-600 hover:text-red-800 disabled:opacity-50"
-            >
-              Eliminar
-            </button>
+            {entrada.resuelto ? (
+              <span className="text-xs text-zinc-400">Cerrado</span>
+            ) : (
+              <>
+                <button
+                  type="button"
+                  onClick={() => setEditando(true)}
+                  className="text-sm text-zinc-500 hover:text-zinc-900"
+                >
+                  Corregir
+                </button>
+                <button
+                  type="button"
+                  onClick={eliminar}
+                  disabled={pendiente}
+                  className="text-sm text-red-600 hover:text-red-800 disabled:opacity-50"
+                >
+                  Eliminar
+                </button>
+              </>
+            )}
           </div>
         )}
       </div>
@@ -108,17 +115,17 @@ function Fila({
 export function HorneadoHoyLista({
   entradas,
   ubicacionDestinoId,
+  titulo = "Ya registrado hoy",
 }: {
   entradas: Entrada[];
   ubicacionDestinoId: string;
+  titulo?: string;
 }) {
   if (entradas.length === 0) return null;
 
   return (
     <div className="flex flex-col gap-2">
-      <span className="text-sm font-medium text-zinc-700">
-        Ya registrado hoy
-      </span>
+      <span className="text-sm font-medium text-zinc-700">{titulo}</span>
       <ul className="flex flex-col divide-y divide-zinc-200 overflow-hidden rounded-lg border border-zinc-200 bg-white">
         {entradas.map((e) => (
           <Fila key={e.id} entrada={e} ubicacionDestinoId={ubicacionDestinoId} />

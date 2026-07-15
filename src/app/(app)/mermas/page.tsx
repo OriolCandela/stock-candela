@@ -26,7 +26,7 @@ export default async function MermasPage({
           <Link href="/" className="text-sm text-zinc-500 hover:text-zinc-900">
             ← Stock
           </Link>
-          <h1 className="mt-1 text-lg font-semibold text-zinc-900">Merma</h1>
+          <h1 className="mt-1 text-lg font-semibold text-zinc-900">Horneado</h1>
         </div>
         <Link
           href="/mermas/informe"
