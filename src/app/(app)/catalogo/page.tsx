@@ -3,7 +3,12 @@ import { createClient } from "@/lib/supabase/server";
 import { ETIQUETA_TIPO_ARTICULO } from "@/lib/constants";
 import { ArticulosList } from "@/components/ArticulosList";
 
-export default async function CatalogoPage() {
+export default async function CatalogoPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ eliminado?: string; fusionado?: string }>;
+}) {
+  const { eliminado, fusionado } = await searchParams;
   const supabase = await createClient();
   const { data: articulos } = await supabase
     .from("articulos")
@@ -34,6 +39,17 @@ export default async function CatalogoPage() {
           + Nuevo
         </Link>
       </header>
+
+      {eliminado && (
+        <p className="rounded-lg bg-green-50 px-4 py-3 text-sm text-green-800">
+          Artículo eliminado.
+        </p>
+      )}
+      {fusionado && (
+        <p className="rounded-lg bg-green-50 px-4 py-3 text-sm text-green-800">
+          Artículos fusionados.
+        </p>
+      )}
 
       <ArticulosList
         articulos={(articulos ?? []).map((a) => ({

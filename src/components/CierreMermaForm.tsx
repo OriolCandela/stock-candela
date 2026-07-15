@@ -8,6 +8,7 @@ import { registrarCierreMermas } from "@/app/(app)/mermas/actions";
 type Lote = {
   parte_horneado_id: string;
   articulo_id: string;
+  fecha: string;
   nombre: string;
   unidad: string;
   cantidad_horneada: number;
@@ -71,7 +72,7 @@ export function CierreMermaForm({
             <div className="flex flex-col">
               <span className="font-medium text-zinc-900">{l.nombre}</span>
               <span className="text-xs text-zinc-500">
-                Horneado ayer: {l.cantidad_horneada} {l.unidad}
+                Horneado el {l.fecha}: {l.cantidad_horneada} {l.unidad}
               </span>
             </div>
             <input

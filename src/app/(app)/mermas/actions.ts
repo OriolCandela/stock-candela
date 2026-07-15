@@ -59,6 +59,10 @@ export async function registrarHorneado(formData: FormData) {
 
   const ubicacion_id = String(formData.get("ubicacion_id") ?? "");
   const lineasJson = String(formData.get("lineas") ?? "[]");
+  const hoy = new Date().toISOString().slice(0, 10);
+  const fechaEnviada = String(formData.get("fecha") ?? "");
+  // Nunca aceptar una fecha futura, aunque el input del navegador lo permitiera.
+  const fecha = fechaEnviada && fechaEnviada <= hoy ? fechaEnviada : hoy;
   if (!ubicacion_id) throw new Error("Falta la ubicación");
 
   const lineas: LineaHorneado[] = JSON.parse(lineasJson);
@@ -76,6 +80,7 @@ export async function registrarHorneado(formData: FormData) {
       articulo_id: l.articulo_id,
       ubicacion_id,
       cantidad: l.cantidad,
+      fecha,
       usuario_id: user?.id ?? null,
     }))
   );
@@ -96,7 +101,7 @@ export async function registrarCierreMermas(formData: FormData) {
 
   const lineas: LineaCierre[] = JSON.parse(lineasJson);
   if (lineas.length === 0) {
-    throw new Error("No hay lotes de ayer pendientes de cerrar");
+    throw new Error("No hay lotes pendientes de cerrar");
   }
 
   const {
@@ -112,7 +117,7 @@ export async function registrarCierreMermas(formData: FormData) {
           ubicacion_id,
           cantidad: l.cantidad_tirada,
           motivo: "caducado",
-          notas: "Cierre: sobrante de lo horneado el día anterior",
+          notas: "Cierre: sobrante de un lote horneado anteriormente",
           parte_horneado_id: l.parte_horneado_id,
           usuario_id: user?.id ?? null,
         })

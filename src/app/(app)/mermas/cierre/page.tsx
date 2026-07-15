@@ -3,12 +3,6 @@ import { createClient } from "@/lib/supabase/server";
 import { getUbicacionActiva } from "@/lib/ubicacion";
 import { CierreMermaForm } from "@/components/CierreMermaForm";
 
-function fechaAyer() {
-  const ayer = new Date();
-  ayer.setDate(ayer.getDate() - 1);
-  return ayer.toISOString().slice(0, 10);
-}
-
 export default async function CierreMermaPage() {
   const supabase = await createClient();
   const { ubicaciones, seleccionada } = await getUbicacionActiva(
@@ -16,15 +10,16 @@ export default async function CierreMermaPage() {
     "Candela Gràcia"
   );
 
-  const ayer = fechaAyer();
+  const hoy = new Date().toISOString().slice(0, 10);
 
   const { data: partes } = seleccionada
     ? await supabase
         .from("partes_horneado")
-        .select("id, articulo_id, cantidad")
+        .select("id, fecha, articulo_id, cantidad")
         .eq("ubicacion_id", seleccionada.id)
-        .eq("fecha", ayer)
+        .lt("fecha", hoy)
         .eq("resuelto", false)
+        .order("fecha", { ascending: true })
     : { data: [] };
 
   const articuloIds = (partes ?? []).map((p) => p.articulo_id);
@@ -36,6 +31,7 @@ export default async function CierreMermaPage() {
   const lotes = (partes ?? []).map((p) => ({
     parte_horneado_id: p.id,
     articulo_id: p.articulo_id,
+    fecha: p.fecha,
     nombre: articulosPorId.get(p.articulo_id)?.nombre ?? "Artículo",
     unidad: articulosPorId.get(p.articulo_id)?.unidad ?? "ud",
     cantidad_horneada: p.cantidad,
@@ -48,11 +44,12 @@ export default async function CierreMermaPage() {
           ← Merma
         </Link>
         <h1 className="mt-1 text-lg font-semibold text-zinc-900">
-          🌙 Cierre: mermas de ayer
+          🌙 Cierre: lotes pendientes
         </h1>
         <p className="text-sm text-zinc-500">
-          {ayer} · {seleccionada?.nombre}. Lo horneado hoy y ayer todavía se
-          puede vender, no aparece aquí.
+          {seleccionada?.nombre}. Cada lote muestra el día que se horneó. Lo de
+          hoy todavía se puede vender y no aparece aquí; si se te olvidó
+          cerrar algún día anterior, te aparecerá aquí igualmente.
         </p>
       </header>
 
@@ -62,7 +59,7 @@ export default async function CierreMermaPage() {
         </p>
       ) : lotes.length === 0 ? (
         <p className="rounded-lg bg-zinc-50 px-4 py-3 text-sm text-zinc-600">
-          No hay lotes de ayer pendientes de cerrar (o ya se cerraron).
+          No hay lotes pendientes de cerrar.
         </p>
       ) : (
         <CierreMermaForm ubicacionId={seleccionada.id} lotes={lotes} />
